@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "plugin",
+  "version-string": "1.0.0",
+  "description": "",
+  "features": {
+    "plugin": {
+      "description": "Build the plugin.",
+      "dependencies": [
+        "rapidcsv",
+        "directxtk",
+        "spdlog",
+        "clib-util",
+        "detours",
+        "xbyak",
+        "simpleini"
+      ]
+    }
+  },
+  "default-features": ["plugin"],
+  "overrides": []
+}
