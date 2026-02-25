@@ -54,11 +54,15 @@ namespace BU::Features {
 	}
 
 	void Misc::OnActorLoad3D(RE::Actor* a_actor) {
-		SKSE::GetTaskInterface()->AddTask([&] {
-			RE::BSVisit::TraverseScenegraphObjects(a_actor->Get3D(), [&](RE::NiAVObject* a_object){
-				SetNodeViSible(a_object);
-				return RE::BSVisit::BSVisitControl::kContinue;
-			});
-		});
+		if (a_actor) {
+			if (a_actor->Is3DLoaded()) {
+				//SKSE::GetTaskInterface()->AddTask([&] {
+					RE::BSVisit::TraverseScenegraphObjects(a_actor->Get3D(), [&](RE::NiAVObject* a_object) {
+						SetNodeViSible(a_object);
+						return RE::BSVisit::BSVisitControl::kContinue;
+					});
+				//});
+			}
+		}
 	}
 }
