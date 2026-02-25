@@ -22,7 +22,7 @@
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
       },
       "environment": {
-        "PROJECT_PLATFORM_FLAGS": "-DWIN32_LEAN_AND_MEAN -DNOMINMAX",
+        "PROJECT_PLATFORM_FLAGS": "-DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE",
         "PROJECT_PLATFORM": "windows"
       }
     },

@@ -13,7 +13,9 @@
         "clib-util",
         "detours",
         "xbyak",
-        "simpleini"
+        "tbb",
+        "abseil",
+        "re2"
       ]
     }
   },

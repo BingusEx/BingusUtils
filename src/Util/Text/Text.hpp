@@ -3,31 +3,39 @@
 namespace Util::Text {
 
 	template< typename ... Args >
-	void PrintNotification(std::string_view rt_fmt_str, Args&&... args) {
+	void MessageBox(std::string_view rt_fmt_str, Args&&... args) {
 		try {
-			DebugNotification(std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
-		} catch (const std::format_error &e) {
+			RE::SendHUDMessage::ShowHUDMessage(std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
+		} 
+		catch (const std::format_error &e) {
 			logger::warn("Could not format notification, check valid format string: {}", e.what());
 		}
 	}
 
 	template< typename ... Args >
-	void PrintMessageBox(std::string_view rt_fmt_str, Args&&... args) {
+	void Notification(std::string_view rt_fmt_str, Args&&... args) {
 		try {
-			DebugMessageBox(std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
-		} catch (const std::format_error &e) {
+			RE::DebugMessageBox(std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
+		} 
+		catch (const std::format_error &e) {
 			logger::warn("Could not format notification, check valid format string: {}", e.what());
 		}
 	}
 
 	template< typename ... Args >
-	void PrintConsole(std::string_view rt_fmt_str, Args&&... args) {
+	void Print(std::string_view rt_fmt_str, Args&&... args) {
 		try {
-			ConsoleLog::GetSingleton()->Print("%s", std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
-		} catch (const std::format_error &e) {
+			RE::ConsoleLog::GetSingleton()->Print("%s", std::vformat(rt_fmt_str, std::make_format_args(args ...)).c_str());
+		} 
+		catch (const std::format_error &e) {
 			logger::warn("Could not format console log, check valid format string: {}", e.what());
 		}
 	}
+
+	bool ContainsInvariantStr(std::string_view a_Source, std::string_view a_Substr);
+
+	std::wstring Utf8ToUtf16(std::string_view a_utf8);
+	std::string Utf16ToUtf8(std::wstring_view a_utf16);
 
 	std::string ToLower(std::string a_str);
 	std::string ToUpper(std::string a_str);

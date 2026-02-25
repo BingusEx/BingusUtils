@@ -20,7 +20,7 @@ namespace {
 	#define UDL "\033[4m"   //Underline
 
 	//Logger Fmt
-	#define LOG_HDR "[" MAG "TPL" WHT "]"
+	#define LOG_HDR "[" CYA "BUT" WHT "]"
 
 
 	constexpr const char* PatternDefault = "[%Y-%m-%d %H:%M:%S.%e] [%l] [%s:%#] %v";
@@ -57,8 +57,15 @@ namespace SKSE::log {
 		}
 
 		spdlog::set_default_logger(std::move(logger));
-		SetLevel("Info"); //Default level
-
+		
+		
+		if (HasConsole()) {
+			SetLevel("Trace");
+		}
+		else {
+			SetLevel("Info"); //Default level
+			
+		}
 	}
 
 	void SetLevel(spdlog::level::level_enum a_level) {

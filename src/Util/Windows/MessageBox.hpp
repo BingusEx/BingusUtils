@@ -2,23 +2,9 @@
 
 namespace Util::Win32 {
 
-	static inline void ReportAndExit(const std::string_view& a_message) {
-		MessageBoxA(
-			nullptr,
-			a_message.data(),
-			SKSE::PluginDeclaration::GetSingleton()->GetName().data(),
-			MB_OK | MB_ICONERROR | MB_TOPMOST
-		);
-		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
-	}
+	void ReportAndExit(std::string_view a_message);
+	void ReportAndExit(std::wstring_view a_message);
+	void ReportInfo(std::string_view a_message);
+	void ReportInfo(std::wstring_view a_message);
 
-
-	static inline void ReportInfo(const std::string_view& a_message) {
-		MessageBoxA(
-			nullptr,
-			a_message.data(),
-			SKSE::PluginDeclaration::GetSingleton()->GetName().data(),
-			MB_OK | MB_ICONINFORMATION | MB_TOPMOST
-		);
-	}
 }

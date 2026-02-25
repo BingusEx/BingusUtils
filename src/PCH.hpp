@@ -94,20 +94,48 @@
 #include <variant>
 #include <vector>
 #include <version>
+#include <codecvt>
+
 
 #include <SKSE/SKSE.h>
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
 
+
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+//Tbb - https://github.com/uxlfoundation/oneTBB
+#include <tbb/concurrent_vector.h>
+#include <tbb/concurrent_map.h>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/parallel_for_each.h>
+#include <tbb/concurrent_queue.h>
+
+//Abseil - https://github.com/abseil/abseil-cpp
+#include <absl/container/flat_hash_map.h> 
+#include <absl/container/flat_hash_set.h> 
+#include <absl/container/inlined_vector.h>
+#include <absl/container/node_hash_map.h>
+#include <absl/container/node_hash_set.h>
+#include <absl/container/btree_map.h> 
+#include <absl/container/btree_set.h>
+
+#include <reflect>                        //https://github.com/qlibs/reflect
+
 namespace logger = SKSE::log;
 using namespace std::literals;
 using namespace REL::literals;
-using namespace RE;
+
+#undef MessageBox
+#undef PlaySound
 
 //Global Includes
+#include "Util/Singleton.hpp"
+#include "Util/Random.hpp"
 #include "Util/Text/Text.hpp"
 #include "Util/Windows/MessageBox.hpp"
+#include "Util/Events/EventDispatcher.hpp"
+#include "Util/Events/EventListener.hpp"
+#include "Common/UI/UIRegistry.hpp"

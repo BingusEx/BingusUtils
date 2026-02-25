@@ -6,9 +6,9 @@ cmake_policy(VERSION 3.21...3.31)
 # #######################################################################################################################
 
 project(
-	Template
+	BingusUtils
 	VERSION 1.0.0.0
-	DESCRIPTION "Template"
+	DESCRIPTION ""
 	LANGUAGES CXX
 )
 
@@ -62,20 +62,32 @@ find_path(CLIB_UTIL_INCLUDE_DIRS "ClibUtil/Utils.hpp")
 # # Find dependencies - VCPKG Other
 # #######################################################################################################################
 
-find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
 find_path(DETOURS_INCLUDE_DIRS "detours/detours.h")
 find_library(DETOURS_LIBRARY detours REQUIRED)
 
 # #######################################################################################################################
 # # Find dependencies - Git
 # #######################################################################################################################
+include(FetchContent)
 
+# Boost Reflect
+# https://github.com/qlibs/reflect
+FetchContent_Declare(
+    boost_ext_reflect
+    GIT_REPOSITORY https://github.com/BingusEx/reflect/
+    GIT_SHALLOW ON
+    GIT_TAG 653c94092fa8702dbc33ebf3b570190fb1a9dc28
+)
+FetchContent_MakeAvailable(boost_ext_reflect)
 
 # #######################################################################################################################
 # # Find dependencies - VCPKG
 # #######################################################################################################################
 
 find_package(xbyak CONFIG REQUIRED)
+find_package(tbb CONFIG REQUIRED)
+find_package(absl CONFIG REQUIRED)
+find_package(re2 CONFIG REQUIRED)
 
 
 # #######################################################################################################################
@@ -87,7 +99,7 @@ target_include_directories(
 	PRIVATE
 	${CLIBUTIL_INCLUDE_DIRS}
 	${DETOURS_INCLUDE_DIRS}
-	${SIMPLEINI_INCLUDE_DIRS}
+	${boost_ext_reflect_SOURCE_DIR}
 )
 
 target_link_libraries(
@@ -95,6 +107,10 @@ target_link_libraries(
 	PRIVATE
     ${DETOURS_LIBRARY}
 	xbyak::xbyak
+	TBB::tbb
+	absl::base
+	absl::flat_hash_map
+	re2::re2
 )
 
 # #######################################################################################################################
