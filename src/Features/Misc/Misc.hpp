@@ -16,6 +16,7 @@ namespace BU::Features {
 
 		void OnSKSEDataLoaded() override;
 		void OnActorLoad3D(RE::Actor* a_actor) override;
+		void OnMenuChange(const RE::MenuOpenCloseEvent* a_event) override;
 
 
 	};

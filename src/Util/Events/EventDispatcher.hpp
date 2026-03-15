@@ -1,10 +1,13 @@
 #pragma once
+#include <RE/B/BSTEvent.h>
 
 namespace BU {
 
 	class EventListener;
 
-	class EventDispatcher : public CInitSingleton<EventDispatcher>, public RE::BSTEventSink<RE::TESResetEvent> {
+	class EventDispatcher : public CInitSingleton<EventDispatcher>, 
+	public RE::BSTEventSink<RE::TESResetEvent>, 
+	public RE::BSTEventSink<RE::MenuOpenCloseEvent> {
 
 		public:
 		static void Init(uint32_t a_serdeID);
@@ -22,8 +25,9 @@ namespace BU {
         static void DispatchActorEquipEvent(RE::Actor* a_actor);
 		static void DispatchActorUnEquipEvent(RE::Actor* a_actor);
 		RE::BSEventNotifyControl ProcessEvent(const RE::TESResetEvent* evn, RE::BSTEventSource<RE::TESResetEvent>* dispatcher) override;
+		RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override;
 
-		private:
+	private:
         //SKSE
         static void SKSEDispatch(SKSE::MessagingInterface::Message* a_message);
         static void SerdeDispatchFormDelete(RE::VMHandle a_callback);

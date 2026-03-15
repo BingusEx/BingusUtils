@@ -50,6 +50,9 @@ namespace BU {
 		virtual void OnSKSESaveGame() {}
 		virtual void OnSKSEDeleteGame() {}
 
+		//UI
+		virtual void OnMenuChange(const RE::MenuOpenCloseEvent* a_event) {}
+
 	};
 
 } // namespace BU

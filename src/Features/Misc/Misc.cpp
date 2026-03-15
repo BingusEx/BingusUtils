@@ -34,6 +34,17 @@ namespace {
 			}
 		}
 	}
+
+	inline void FlashUntilFocused(HWND hwnd)
+	{
+		FLASHWINFO info{};
+		info.cbSize = sizeof(info);
+		info.hwnd = hwnd;
+		info.dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG;
+		info.uCount = 0;
+		info.dwTimeout = 0;
+		FlashWindowEx(&info);
+	}
 }
 
 
@@ -54,7 +65,7 @@ namespace BU::Features {
 	}
 
 	void Misc::OnActorLoad3D(RE::Actor* a_actor) {
-		if (a_actor) {
+		/*if (a_actor) {
 			if (a_actor->Is3DLoaded()) {
 				//SKSE::GetTaskInterface()->AddTask([&] {
 					RE::BSVisit::TraverseScenegraphObjects(a_actor->Get3D(), [&](RE::NiAVObject* a_object) {
@@ -62,6 +73,14 @@ namespace BU::Features {
 						return RE::BSVisit::BSVisitControl::kContinue;
 					});
 				//});
+			}
+		}*/
+	}
+
+	void Misc::OnMenuChange(const RE::MenuOpenCloseEvent* a_event) {
+		if (a_event) {
+			if (a_event->opening && a_event->menuName == RE::MainMenu::MENU_NAME) {
+				FlashUntilFocused(reinterpret_cast<HWND>(RE::BSGraphics::Renderer::GetCurrentRenderWindow()->hWnd));
 			}
 		}
 	}

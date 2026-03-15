@@ -87,6 +87,11 @@ namespace BU {
 			evtSrcHolder->AddEventSink<RE::TESResetEvent>(&GetSingleton());
 		}
 
+		if (auto ui = RE::UI::GetSingleton()) {
+			ui->AddEventSink<RE::MenuOpenCloseEvent>(&GetSingleton());
+			logger::info("Successfully registered MenuOpenCloseEventHandler");
+		}
+
 	}
 
 	void EventDispatcher::SKSEDispatch(SKSE::MessagingInterface::Message* a_message) {
@@ -234,4 +239,10 @@ namespace BU {
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
+	RE::BSEventNotifyControl EventDispatcher::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) {
+		if (a_event) {
+			ForEachListener([a_event](EventListener* a_lst) {a_lst->OnMenuChange(a_event); });
+		}
+		return RE::BSEventNotifyControl::kContinue;
+	}
 }
