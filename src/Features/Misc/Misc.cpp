@@ -35,8 +35,24 @@ namespace {
 		}
 	}
 
-	inline void FlashUntilFocused(HWND hwnd)
-	{
+	void SetNodeVisibleRecursive(RE::NiAVObject* a_object) {
+		if (!a_object) {
+			return;
+		}
+
+		SetNodeViSible(a_object);
+
+		const auto node = a_object->AsNode();
+		if (!node) {
+			return;
+		}
+
+		for (auto& child : node->GetChildren()) {
+			SetNodeVisibleRecursive(child.get());
+		}
+	}
+
+	inline void FlashUntilFocused(HWND hwnd) {
 		FLASHWINFO info{};
 		info.cbSize = sizeof(info);
 		info.hwnd = hwnd;
@@ -50,31 +66,14 @@ namespace {
 
 namespace BU::Features {
 
-	void Misc::OnSerdeSave(SKSE::SerializationInterface* a_this) {}
-
-	void Misc::OnSerdeLoad(SKSE::SerializationInterface* a_this, std::uint32_t a_recordType, std::uint32_t a_recordVersion, std::uint32_t a_recordSize) {}
-
-	void Misc::OnActorReset(RE::Actor* a_actor) {}
-
-	void Misc::OnActorUpdate(RE::Actor* a_actor) {}
-
-	void Misc::OnSerdePostLoad() {}
-
 	void Misc::OnSKSEDataLoaded() {
 		RemovePerkConditions();
 	}
 
-	void Misc::OnActorLoad3D(RE::Actor* a_actor) {
-		/*if (a_actor) {
-			if (a_actor->Is3DLoaded()) {
-				//SKSE::GetTaskInterface()->AddTask([&] {
-					RE::BSVisit::TraverseScenegraphObjects(a_actor->Get3D(), [&](RE::NiAVObject* a_object) {
-						SetNodeViSible(a_object);
-						return RE::BSVisit::BSVisitControl::kContinue;
-					});
-				//});
-			}
-		}*/
+	void Misc::OnActorSet3D(RE::Actor* a_actor, RE::NiAVObject* a_object) {
+		if (a_actor) {
+			SetNodeVisibleRecursive(a_object);
+		}
 	}
 
 	void Misc::OnMenuChange(const RE::MenuOpenCloseEvent* a_event) {

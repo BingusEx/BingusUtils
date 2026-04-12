@@ -17,6 +17,7 @@ namespace BU {
 		//Actor
 		virtual void OnActorUpdate(RE::Actor* a_actor) {}
 		virtual void OnActorLoad3D(RE::Actor* a_actor) {}
+		virtual void OnActorSet3D(RE::Actor* a_actor, RE::NiAVObject* a_object) {}
 		virtual void OnActorReset(RE::Actor* a_actor) {}
 		virtual void OnActorEquip(RE::Actor* a_actor) {}
 		virtual void OnActorUnequip(RE::Actor* a_actor) {}

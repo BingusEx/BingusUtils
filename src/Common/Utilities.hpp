@@ -3,7 +3,7 @@
 
 namespace BU::Utils {
 
-	inline std::vector<RE::Actor*> GetAllLoadedActors() {
+	inline std::vector<RE::Actor*> GetAllLoadedActors(bool a_sortByDst) {
 
 		const RE::ProcessLists* const process_list = RE::ProcessLists::GetSingleton();
 		const auto& handles = process_list->highActorHandles;
@@ -22,8 +22,42 @@ namespace BU::Utils {
 			result.emplace_back(player);
 		}
 
+
+        if (a_sortByDst) {
+            std::ranges::sort(result, [](RE::Actor* a, RE::Actor* b) {
+                return a->GetDistance(RE::PlayerCharacter::GetSingleton()) < b->GetDistance(RE::PlayerCharacter::GetSingleton());
+            });
+        }
+
 		return result;
 	}
+
+    static std::string GetFormName(const RE::TESForm* form) {
+        if (!form) {
+            return "[Null]";
+        }
+
+        if (const auto* fullName = form->As<RE::TESFullName>(); fullName && fullName->GetFullNameLength() > 0) {
+            return fullName->GetFullName();
+        }
+
+        return std::format("{} [{:08X}]", form->GetName(), form->GetFormID());
+    }
+
+    static std::string GetRefDisplayName(RE::TESObjectREFR* ref) {
+        if (!ref) {
+            return "[Null]";
+        }
+
+        if (const auto* base = ref->GetObjectReference()) {
+            if (const auto* fullName = base->As<RE::TESFullName>(); fullName && fullName->GetFullNameLength() > 0) {
+                return std::format("{} [{:08X}]", fullName->GetFullName(), ref->GetFormID());
+            }
+        }
+
+        return std::format("Ref [{:08X}]", ref->GetFormID());
+    }
+
 
     namespace Regex {
 

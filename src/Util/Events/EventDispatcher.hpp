@@ -21,7 +21,8 @@ namespace BU {
         //Actor
         static void DispatchActorUpdate(RE::Actor* a_actor);
         static void DispatchActorLoad3D(RE::Actor* a_actor);
-        static void DispatchActorReset(RE::Actor* a_actor);
+		static void DispatchActorSet3D(RE::Actor* a_actor, RE::NiAVObject* a_object);
+		static void DispatchActorReset(RE::Actor* a_actor);
         static void DispatchActorEquipEvent(RE::Actor* a_actor);
 		static void DispatchActorUnEquipEvent(RE::Actor* a_actor);
 		RE::BSEventNotifyControl ProcessEvent(const RE::TESResetEvent* evn, RE::BSTEventSource<RE::TESResetEvent>* dispatcher) override;

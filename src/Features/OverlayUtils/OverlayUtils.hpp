@@ -26,7 +26,7 @@ namespace BU::Features {
 		void OnActorUnequip(RE::Actor* a_actor) override;
 
 		static void RemoveActor(RE::Actor* a_actor);
-		static void InvalidateData(RE::Actor* a_actor);
+		static void InvalidateAndApplyToActor(RE::Actor* a_actor);
 
 		struct Data {
 			std::vector<OverlayEntry> OvlFace = {};
@@ -37,7 +37,7 @@ namespace BU::Features {
 			bool AlreadyApplied = false;
 		};
 
-		static inline std::mutex _Lock;
+		static inline std::mutex m_mutex;
 		static inline Serialization::MapRecord<Data, 'OUAD'> ActorData = {};
 
 		friend UI::UIItemRegistry;

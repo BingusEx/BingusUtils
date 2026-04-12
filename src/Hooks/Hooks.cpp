@@ -37,6 +37,28 @@ namespace Hooks {
 		FUNCTYPE_VFUNC_UNIQUE func;
 	};
 
+	struct Set3D {
+
+		static constexpr std::size_t funcIndex = 0x6C;
+
+		template<int ID>
+		static RE::NiAVObject* thunk(RE::Actor* a_this, RE::NiAVObject* a_object, bool a_queue3DTasks) {
+			RE::NiAVObject* Res = func<ID>(a_this, a_object, a_queue3DTasks);
+
+			{
+				const auto& intfc = SKSE::GetTaskInterface();
+				intfc->AddTask([a_this] {
+					BU::EventDispatcher::DispatchActorLoad3D(a_this);
+				});
+			}
+
+			return Res;
+		}
+
+		template<int ID>
+		FUNCTYPE_VFUNC_UNIQUE func;
+	};
+
 	struct Update {
 
 		static constexpr std::size_t funcIndex = 0xAD;

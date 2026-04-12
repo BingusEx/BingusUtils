@@ -2,6 +2,7 @@
 
 #include "Features/ManaTanks/Manatanks.hpp"
 #include "Common/SKEE/SKEE.hpp"
+#include "Common/UI/UIUtils.hpp"
 
 namespace {
 	
@@ -128,278 +129,368 @@ namespace BU::Features {
 
 	void ManaTanks::Draw() {
 
-		// ---- Add actor section ----
+		// ─── Options ────────────────────────────────────────────────────────────
 		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-			auto actorList = Utils::GetAllLoadedActors();
+
+			static std::string AlreadyAddedText = "";
+			ImGui::Text("Add Actor");
+			ImGui::SameLine();
+			ImGui::TextDisabled(AlreadyAddedText.c_str());
+
+			auto actorList = Utils::GetAllLoadedActors(true);
 
 			static RE::ActorHandle s_selected{};
-			const char* preview = "<Select Actor>";
-			RE::FormID previewID = 0;
 
+			// Build preview string
+			std::string previewStr = "[Select Actor]";
 			if (auto sel = s_selected.get()) {
-				preview = sel->GetDisplayFullName();
-				previewID = sel->GetFormID();
+				const char* name = sel->GetDisplayFullName();
+				previewStr = fmt::format("{} [0x{:08X}]", name ? name : "[Unnamed]", sel->GetFormID());
 			}
 
-			const std::string previewStr =
-				(previewID != 0)
-				? fmt::format("{} [0x{:08X}]", preview, previewID)
-				: std::string(preview);
+			ImVec2 contentWidth, addTextSize;
+			ImGui::GetContentRegionAvail(&contentWidth);
+			ImGui::CalcTextSize(&addTextSize, "Add", nullptr, true, -1.0f);
 
+			// Add Actor ComboBox
+			ImGui::SetNextItemWidth(contentWidth.x - addTextSize.x - ImGui::GetStyle()->ItemSpacing.x * 2.0f - ImGui::GetStyle()->FramePadding.x * 4.0f);
 			if (ImGui::BeginCombo("##AddActor", previewStr.c_str())) {
 				for (RE::Actor* actor : actorList) {
-					if (!actor) {
-						continue;
-					}
+					if (!actor) continue;
 
-					const auto name = actor->GetDisplayFullName();
-					const auto id = actor->GetFormID();
-					const std::string item = fmt::format("{} [0x{:08X}]", name ? name : "<Unnamed>", id);
-
+					const char* name = actor->GetDisplayFullName();
+					const RE::FormID id = actor->GetFormID();
+					const std::string item = fmt::format("{} [0x{:08X}]", name ? name : "[Unnamed]", id);
 					const bool is_selected = (s_selected.get().get() == actor);
-					if (ImGui::Selectable(item.c_str(), is_selected)) {
+
+					if (ImGui::Selectable(item.c_str(), is_selected))
 						s_selected = actor->GetHandle();
-					}
-					if (is_selected) {
+
+					if (is_selected)
 						ImGui::SetItemDefaultFocus();
-					}
 				}
 				ImGui::EndCombo();
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Add New Actor")) {
-				if (RE::Actor* actor = s_selected.get().get()) {
-					auto [it, inserted] = ActorData.value.emplace(actor->formID, Data{});
-					// on any ActorData change, invalidate by forcing update
-					it->second.LastKnownValue = -1.f;
+			const bool canAdd = s_selected.get() && !ActorData.value.contains(s_selected.get()->formID);
+
+			// Add Actor Button
+			{
+				ImGui::BeginDisabled(!canAdd);
+				if (canAdd) ImUtil::ButtonStyle_Green();
+
+				if (ImGui::Button("Add")) {
+					if (RE::Actor* actor = s_selected.get().get()) {
+						auto [it, inserted] = ActorData.value.emplace(actor->formID, Data{});
+						it->second.LastKnownValue = -1.f;
+					}
 				}
+
+				if (canAdd) ImUtil::ButtonStyle_Reset();
+				ImGui::EndDisabled();
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+				if (!s_selected.get())  ImGui::SetTooltip("Select an actor first.");
+				else if (!canAdd)       ImGui::SetTooltip("This actor has already been added.");
+				else                    ImGui::SetTooltip("Add the selected actor.");
+			}
+
+			// Update "Already Added" text
+			AlreadyAddedText = !canAdd && s_selected.get() ? "[Already added]" : "";
+
+			ImGui::Spacing();
 			ImGui::InputFloat("EPS", &EPS.value, 0.001f, 0.01f, "%.5f");
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Set the epsilon threshold for applying updated morphs\n"
+					  "Lower: Smoother updates, higher performace cost.\n"
+					  "Higher: Less frequent updates, lower performance cost."
+				);
+			}
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+
 		}
 
+
+		// ─── Edit Actor ─────────────────────────────────────────────────────────
 		if (ImGui::CollapsingHeader("Edit Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
 			auto ModeLabel = [](uint8_t m) -> const char* {
 				switch (m) {
-					case 0: return "None";
-					case 1: return "Mana Tanks";
-					case 2: return "Absolute Scale Mode";
-					default: return "Unknown";
+				case 0:  return "None";
+				case 1:  return "Mana Tanks";
+				case 2:  return "Absolute Scale Mode";
+				default: return "Unknown";
 				}
 			};
 
-			static RE::FormID s_selectedID = 0;
-
 			if (ActorData.value.empty()) {
-				ImGui::TextUnformatted("No actors added.");
-				return;
+				ImGui::TextDisabled("No actors added yet. Use the Options section above.");
 			}
+			else {
+				static RE::FormID s_selectedID = 0;
 
-			// ---- preview label ----
-			std::string preview = "<Select Actor>";
-			if (s_selectedID != 0) {
-				if (auto* form = RE::TESForm::LookupByID(s_selectedID)) {
-					if (auto* actor = form->As<RE::Actor>()) {
-						const char* name = actor->GetDisplayFullName();
-						preview = fmt::format("{} [0x{:08X}]", name ? name : "<Unnamed>", s_selectedID);
-					}
-					else {
-						preview = fmt::format("<Not An Actor> [0x{:08X}]", s_selectedID);
-					}
-				}
-				else {
-					preview = fmt::format("<Missing> [0x{:08X}]", s_selectedID);
-				}
-			}
-
-			// ---- combo ----
-			if (ImGui::BeginCombo("Actor##Edit", preview.c_str())) {
-				for (const auto& key : ActorData.value | std::views::keys) {
-					RE::Actor* actor = nullptr;
-					if (auto* form = RE::TESForm::LookupByID(key)) {
-						actor = form->As<RE::Actor>();
-					}
-
-					const char* name = (actor && actor->GetDisplayFullName()) ? actor->GetDisplayFullName() : "<Unnamed>";
-					const std::string label = fmt::format("{} [0x{:08X}]", name, key);
-
-					const bool is_selected = (s_selectedID == key);
-					if (ImGui::Selectable(label.c_str(), is_selected)) {
-						s_selectedID = key;
-					}
-					if (is_selected) {
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
-
-			if (s_selectedID != 0) {
-
-				ImGui::SameLine();
-
-				auto it = ActorData.value.find(s_selectedID);
-				if (it == ActorData.value.end()) {
-					ImGui::TextUnformatted("Selected actor no longer exists in ActorData.");
-					return;
-				}
-
-				Data& data = it->second;
-
-				RE::Actor* actor = nullptr;
-				if (auto* form = RE::TESForm::LookupByID(s_selectedID)) {
-					actor = form->As<RE::Actor>();
-				}
-
-				if (ImGui::Button("Remove##Edit")) {
-					const RE::FormID removeID = s_selectedID;
-
-					ActorData.value.erase(removeID);
-
-					// pick a new selection
+				// Ensure selection is still valid
+				if (s_selectedID != 0 && !ActorData.value.contains(s_selectedID))
 					s_selectedID = 0;
-					if (!ActorData.value.empty()) {
-						s_selectedID = ActorData.value.begin()->first;
-					}
 
-					if (actor) {
-						SKEE::Morphs::Clear(actor, MorphKey.data());
-						SKEE::Morphs::Apply(actor);
-					}
-					return;
-				}
+				// Auto-select first entry if nothing is selected
+				if (s_selectedID == 0 && !ActorData.value.empty())
+					s_selectedID = ActorData.value.begin()->first;
 
-				bool actorDataChanged = false;
+				// Build preview
+				auto BuildActorLabel = [](RE::FormID id) -> std::string {
+					if (id == 0) return "[Select Actor]";
+					if (auto* form = RE::TESForm::LookupByID(id))
+						if (auto* actor = form->As<RE::Actor>()) {
+							const char* name = actor->GetDisplayFullName();
+							return fmt::format("{} [0x{:08X}]", name ? name : "[Unnamed]", id);
+						}
+					return fmt::format("[Missing] [0x{:08X}]", id);
+				};
 
-				// ---- Mode ----
 				{
-					if (ImGui::BeginCombo("Mode##Edit", ModeLabel(data.CurMode))) {
-						for (int m = 0; m <= 2; ++m) {
-							const auto mm = static_cast<uint8_t>(m);
-							const bool sel = (data.CurMode == mm);
-							if (ImGui::Selectable(ModeLabel(mm), sel)) {
-								data.CurMode = mm;
-								actorDataChanged = true;
-							}
-							if (sel) {
+					ImVec2 availableWidth, removeTextSize;
+					ImGui::GetContentRegionAvail(&availableWidth);
+					ImGui::CalcTextSize(&removeTextSize, "Remove", nullptr, true, -1.0f);
+
+					ImGui::SetNextItemWidth(availableWidth.x - removeTextSize.x - ImGui::GetStyle()->ItemSpacing.x * 2.0f - ImGui::GetStyle()->FramePadding.x * 4.0f);
+					if (ImGui::BeginCombo("##EditActor", BuildActorLabel(s_selectedID).c_str())) {
+						for (const auto& key : ActorData.value | std::views::keys) {
+							const bool is_selected = (s_selectedID == key);
+							if (ImGui::Selectable(BuildActorLabel(key).c_str(), is_selected))
+								s_selectedID = key;
+							if (is_selected)
 								ImGui::SetItemDefaultFocus();
-							}
 						}
 						ImGui::EndCombo();
 					}
-
-				}
-
-				ImGui::Separator();
-
-				// ---- Magicka Reference ----
-				{
-					int ref = static_cast<int>(data.Reference);
-					if (ImGui::InputInt("Magicka Reference##Edit", &ref, 1, 10)) {
-						ref = std::clamp(ref, 0, 0xFFFF);
-						const auto v = static_cast<uint16_t>(ref);
-						if (v != data.Reference) {
-							data.Reference = v;
-							actorDataChanged = true;
-						}
+					if (ImGui::IsItemHovered()) {
+						ImGui::SetTooltip("Select a tracked actor to edit.");
 					}
 				}
 
-				// ---- Multipliers ----
-				if (ImGui::InputFloat("Multiplier##Edit", &data.ScaleMult, 0.01f, 0.1f, "%.3f")) {
-					actorDataChanged = true;
-				}
+				if (s_selectedID != 0) {
+					auto it = ActorData.value.find(s_selectedID);
+					if (it != ActorData.value.end()) {
+						Data& data = it->second;
 
-				if (ImGui::InputFloat("Absolute Mode Mult.##Edit", &data.AbsScale, 0.01f, 0.1f, "%.3f")) {
-					actorDataChanged = true;
-				}
+						RE::Actor* actor = nullptr;
+						if (auto* form = RE::TESForm::LookupByID(s_selectedID))
+							actor = form->As<RE::Actor>();
 
-				// ---- invalidate on change ----
-				if (actorDataChanged) {
-					data.LastKnownValue = -1.f;
+						// Actor Remove Button
+						{
+							ImGui::SameLine();
+
+							ImUtil::ButtonStyle_Red();
+							const bool doRemove = ImGui::Button("Remove##ActorOptions");
+							ImUtil::ButtonStyle_Reset();
+
+							ImGui::Spacing();
+
+							if (doRemove) {
+								ActorData.value.erase(s_selectedID);
+								s_selectedID = ActorData.value.empty() ? 0 : ActorData.value.begin()->first;
+
+								if (actor) {
+									SKEE::Morphs::Clear(actor, MorphKey.data());
+									SKEE::Morphs::Apply(actor);
+								}
+							}
+						}
+
+						
+
+
+						bool actorDataChanged = false;
+
+						// ---- Mode ----
+						{
+							if (ImGui::BeginCombo("Mode##Edit", ModeLabel(data.CurMode))) {
+								for (int m = 0; m <= 2; ++m) {
+									const auto mm = static_cast<uint8_t>(m);
+									const bool sel = (data.CurMode == mm);
+									if (ImGui::Selectable(ModeLabel(mm), sel)) {
+										data.CurMode = mm;
+										actorDataChanged = true;
+									}
+									if (sel) ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+							if (ImGui::IsItemHovered()) {
+								ImGui::SetTooltip("Select the scaling mode for this actor.");
+							}
+						}
+
+						// ---- Magicka Reference ----
+						{
+							int ref = data.Reference;
+							if (ImGui::InputInt("Magicka Reference##Edit", &ref, 1, 10)) {
+								ref = std::clamp(ref, 0, 0xFFFF);
+								const auto v = static_cast<uint16_t>(ref);
+								if (v != data.Reference) {
+									data.Reference = v;
+									actorDataChanged = true;
+								}
+							}
+							if (ImGui::IsItemHovered()) {
+								ImGui::SetTooltip("The baseline magicka value used as the reference point for 100%% scaling.");
+							}
+						}
+
+						// ---- Multipliers ----
+						{
+							ImGui::SetNextItemWidth(220.0f);
+							if (ImGui::InputFloat("Multiplier##Edit", &data.ScaleMult, 0.01f, 0.1f, "%.3f"))
+								actorDataChanged = true;
+							if (ImGui::IsItemHovered()) {
+								ImGui::SetTooltip("Scales the resulting mana tanks effect for this actor.\n"
+									"1.0 = default strength, 2.0 = double effect, 0.0 = no effect.");
+							}
+						}
+
+						{
+							ImGui::SetNextItemWidth(220.0f);
+							if (ImGui::InputFloat("Absolute Mode Mult.##Edit", &data.AbsScale, 0.01f, 0.1f, "%.3f"))
+								actorDataChanged = true;
+							if (ImGui::IsItemHovered()) {
+								ImGui::SetTooltip("Multiplier applied when using Absolute Scale Mode.");
+							}
+						}
+
+						// ---- invalidate on change ----
+						if (actorDataChanged) {
+							data.LastKnownValue = -1.f;
+						}
+
+						
+					}
 				}
 			}
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+
 		}
 
-		if (ImGui::CollapsingHeader("Morph Entries", ImGuiTreeNodeFlags_DefaultOpen)) {
+		// ─── Morph Entries ───────────────────────────────────────────────────────
+		if (ImGui::CollapsingHeader("Morphs")) {
 			auto& list = MorphData.value;
+			bool morphChanged = false;
+
+			// Add new entry
+			ImGui::Text("Add New Morph");
 
 			static std::string newName;
 			static float newValue = 0.0f;
 
-			bool morphChanged = false;
-
 			ImGui::SetNextItemWidth(350.0f);
-			ImGui::InputText(
-				"##NewMorphName",
-				newName.data(),
-				newName.capacity() + 1,
+			ImGui::InputText("##NewMorphName", newName.data(), newName.capacity() + 1,
 				ImGuiInputTextFlags_CallbackResize,
-				[](ImGuiInputTextCallbackData* data) -> int {
-					if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-						auto* s = static_cast<std::string*>(data->UserData);
-						s->resize(static_cast<size_t>(data->BufTextLen));
-						data->Buf = s->data();
+				[](ImGuiInputTextCallbackData* d) -> int {
+					if (d->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+						auto* s = static_cast<std::string*>(d->UserData);
+						s->resize(static_cast<size_t>(d->BufTextLen));
+						d->Buf = s->data();
 					}
 					return 0;
 				},
-				&newName);
+				&newName
+			);
 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(220.f);
-			if (ImGui::InputFloat("##NewMorphVal", &newValue, 0.01f, 0.1f, "%.3f")) {
-				// not a data change until actually added
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("The raw name of the NiOverride/RaceMenu morph (as is shown in outfit studio) to be added.");
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Add##NewMorph")) {
-				if (!newName.empty()) {
+			ImGui::SetNextItemWidth(150.0f);
+			ImGui::InputFloat("##NewMorphVal", &newValue, 0.01f, 0.1f, "%.3f");
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("The strength of the the to be added morph.\n"
+					"Negative values are allowed.");
+			}
+
+			//Add New Morph Button
+			{
+
+				bool empty = newName.empty();
+				ImGui::SameLine();
+				ImGui::BeginDisabled(empty);
+				if (!empty) ImUtil::ButtonStyle_Green();
+				if (ImGui::Button("Add##NewMorph")) {
 					list.push_back(MorphEntry{ newName, newValue });
 					newName.clear();
 					newValue = 0.0f;
 					morphChanged = true;
 				}
+				if (!empty) ImUtil::ButtonStyle_Reset();
+				ImGui::EndDisabled();
 			}
 
-			ImGui::Separator();
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+				if (newName.empty()) ImGui::SetTooltip("Enter a morph name first.");
+				else ImGui::SetTooltip("Add this morph to the list.");
+			}
+
+			// ── Morph list ──
+			ImGui::Spacing();
+			ImGui::Text("%s", fmt::format("Morphs ({})", list.size()).c_str());
+
+			static auto resizeCb = [](ImGuiInputTextCallbackData* d) -> int {
+				if (d->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+					auto* s = static_cast<std::string*>(d->UserData);
+					s->resize(static_cast<size_t>(d->BufTextLen));
+					d->Buf = s->data();
+				}
+				return 0;
+			};
 
 			std::optional<std::size_t> eraseIndex;
 
 			for (std::size_t i = 0; i < list.size(); ++i) {
 				auto& e = list[i];
-
 				ImGui::PushID(static_cast<int>(i));
 
-				// Name edit
+				// Morph Name Edit
 				{
-					auto cb = [](ImGuiInputTextCallbackData* data) -> int {
-						if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-							auto* s = static_cast<std::string*>(data->UserData);
-							s->resize(static_cast<size_t>(data->BufTextLen));
-							data->Buf = s->data();
-						}
-						return 0;
-					};
-
 					ImGui::SetNextItemWidth(350.0f);
-					if (ImGui::InputText("##Name", e.morphName.data(), e.morphName.capacity() + 1,
-						ImGuiInputTextFlags_CallbackResize, cb, &e.morphName)) {
+					if (ImGui::InputText("##Name", e.morphName.data(), e.morphName.capacity() + 1, ImGuiInputTextFlags_CallbackResize, resizeCb, &e.morphName))
 						morphChanged = true;
+					if (ImGui::IsItemHovered()) {
+						ImGui::SetTooltip("Raw Morph key name as is shown in outfit studio.");
 					}
 				}
 
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(220.0f);
-				if (ImGui::InputFloat("##Value", &e.scale, 0.01f, 0.1f, "%.3f")) {
-					morphChanged = true;
+				// Morph Strength Value edit
+				{
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(150.0f);
+					if (ImGui::InputFloat("##Value", &e.scale, 0.01f, 0.1f, "%.3f"))
+						morphChanged = true;
+					if (ImGui::IsItemHovered()) {
+						ImGui::SetTooltip("Adjust the strength multiplier of the morph.\n"
+							"Negative values are allowed.");
+					}
 				}
 
-				ImGui::SameLine();
-				if (ImGui::Button("Remove")) {
-					eraseIndex = i;
-				}
+				// Remove Morph Button
+				{
+					ImGui::SameLine();
+					ImUtil::ButtonStyle_Red();
+					if (ImGui::Button("X##Morphs"))
+						eraseIndex = i;
+					ImUtil::ButtonStyle_Reset();
 
+					if (ImGui::IsItemHovered()) {
+						ImGui::SetTooltip("Remove this morph.");
+					}
+				}
 				ImGui::PopID();
 			}
 
@@ -408,19 +499,22 @@ namespace BU::Features {
 				morphChanged = true;
 			}
 
+			ImGui::Spacing();
+
 			if (ImGui::Button("Reset to Defaults")) {
 				list = DefaultEntries;
 				morphChanged = true;
 			}
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Restore the morph list to its default configuration.");
+			}
 
-			// ---- if MorphData changes call InvalidateData(actor) ----
+			// Propagate changes
 			if (morphChanged) {
 				for (const auto& id : ActorData.value | std::views::keys) {
-					if (auto* form = RE::TESForm::LookupByID(id)) {
-						if (auto* actor = form->As<RE::Actor>()) {
+					if (auto* form = RE::TESForm::LookupByID(id))
+						if (auto* actor = form->As<RE::Actor>())
 							InvalidateData(actor);
-						}
-					}
 				}
 			}
 		}

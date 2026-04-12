@@ -216,6 +216,10 @@ namespace BU {
 		ForEachListener([a_actor](EventListener* a_lst) {a_lst->OnActorLoad3D(a_actor);});
 	}
 
+	void EventDispatcher::DispatchActorSet3D(RE::Actor* a_actor, RE::NiAVObject* a_object) {
+		ForEachListener([a_actor, a_object](EventListener* a_lst) {a_lst->OnActorSet3D(a_actor, a_object);});
+	}
+
 	void EventDispatcher::DispatchActorReset(RE::Actor* a_actor) {
 		ForEachListener([a_actor](EventListener* a_lst) {a_lst->OnActorReset(a_actor);});
 	}

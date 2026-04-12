@@ -96,11 +96,9 @@
 #include <version>
 #include <codecvt>
 
-
 #include <SKSE/SKSE.h>
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
-
 
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
