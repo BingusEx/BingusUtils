@@ -1,6 +1,4 @@
 #pragma once
-#include "Util/Data/Utils/MapRecord.hpp"
-#include "Util/Data/Utils/VectorRecord.hpp"
 
 namespace BU::Features {
 
@@ -8,7 +6,7 @@ namespace BU::Features {
 
 
 		friend UI::UIItemRegistry;
-		static constexpr std::string_view UICategoryName = "QuestUtils";
+		static constexpr std::string_view UICategoryName = "Quest Utils";
 		void OnSKSEDataLoaded() override;
 		static void Draw();
 

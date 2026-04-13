@@ -1,21 +1,21 @@
 #include "Util/Events/EventDispatcher.hpp"
 #include "Util/Events/EventListener.hpp"
 
-#include "REX/W32/DBGHELP.h"
-
 namespace {
 
-	std::string GetPrettyTypeName(const std::type_info& ti) {
-		char buffer[1024];
-		if (REX::W32::UnDecorateSymbolName(
-			ti.name(),
-			buffer,
-			sizeof(buffer),
-			REX::W32::UNDNAME_NAME_ONLY)) {
-			return buffer;
-		}
+	#ifdef _MSC_VER
+	std::string GetTypeName(const std::type_info& ti) {
 		return ti.name();
 	}
+	#else
+	std::string GetTypeName(const std::type_info& ti) {
+		int status = 0;
+		char* demangled = abi::__cxa_demangle(ti.name(), nullptr, nullptr, &status);
+		std::string result = (status == 0 && demangled) ? demangled : ti.name();
+		std::free(demangled);
+		return result;
+	}
+	#endif
 
 }
 
@@ -26,7 +26,7 @@ namespace BU {
 
 		{
 			std::lock_guard lock(m_lock);
-			logger::trace("Adding Listener: {}", GetPrettyTypeName(typeid(a_listener)));
+			logger::trace("Adding Listener: {}", GetTypeName(typeid(*a_listener)));
 			m_listeners.push_back(ListenerEntry(a_listener));
 		}
 	}
@@ -40,7 +40,7 @@ namespace BU {
 			for (auto& entry : m_listeners) {
 				EventListener* p = entry.ptr.load(std::memory_order_relaxed);
 				if (p == a_listener) {
-					logger::trace("Deleting Listener: {}", GetPrettyTypeName(typeid(a_listener)));
+					logger::trace("Deleting Listener: {}", GetTypeName(typeid(*a_listener)));
 					entry.ptr.store(nullptr, std::memory_order_release);
 				}
 			}
