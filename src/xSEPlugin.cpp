@@ -12,6 +12,7 @@
 #include "Features/NPCUtils/NPCUtils.hpp"
 #include "Features/QuestUtils//QuestUtils.hpp"
 #include "Features/OverlayUtils/OverlayUtils.hpp"
+#include "Features/RMInspector/RMInspector.hpp"
 
 
 SKSEPluginLoad(const SKSE::LoadInterface * a_SKSE) {
@@ -24,6 +25,7 @@ SKSEPluginLoad(const SKSE::LoadInterface * a_SKSE) {
 	BU::EventDispatcher::AddListener(&BU::UI::UIItemRegistry::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::SKEE::Overlays::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::SKEE::Morphs::GetSingleton());
+	BU::EventDispatcher::AddListener(&BU::SKEE::Transforms::GetSingleton());
 
 	BU::EventDispatcher::AddListener(&BU::Features::ManaTanks::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::Features::ArmorFactor::GetSingleton());
@@ -31,6 +33,7 @@ SKSEPluginLoad(const SKSE::LoadInterface * a_SKSE) {
 	BU::EventDispatcher::AddListener(&BU::Features::Misc::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::Features::QuestUtils::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::Features::NPCUtils::GetSingleton());
+	BU::EventDispatcher::AddListener(&BU::Features::RMInspector::GetSingleton());
 
 	BU::EventDispatcher::Init(_byteswap_ulong('BIUT'));
 

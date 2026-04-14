@@ -115,7 +115,7 @@ namespace BU::SKEE {
 			const std::string NodeName = fmt::format(fmt::runtime(a_bodyPart.FmtName), i);
 			const std::string NodeDataTextureStr = GetNodeOverrideString(a_Actor, Fem, NodeName.c_str(), static_cast<int16_t>(Layers::kShaderTexture), 0).c_str();
 
-			const bool IsUnused = NodeDataTextureStr.empty() || 
+			const bool IsUnused = NodeDataTextureStr.empty() ||
 				Util::Text::ContainsInvariantStr(NodeDataTextureStr, R"(\default.dds)") ||
 				Util::Text::ContainsInvariantStr(NodeDataTextureStr, R"(\blank.dds)");
 
@@ -144,10 +144,10 @@ namespace BU::SKEE {
 			int16_t count = -1;
 
 			switch (static_cast<Loc>(a_overlay.BodyPart)) {
-				case Loc::Face: { count = FaceInfo.Count;  targetFmt = FaceInfo.FmtName; break; }
-				case Loc::Hand: { count = HandsInfo.Count; targetFmt = HandsInfo.FmtName; break; }
-				case Loc::Body: { count = BodyInfo.Count;  targetFmt = BodyInfo.FmtName; break; }
-				case Loc::Feet: { count = FeetInfo.Count;  targetFmt = FeetInfo.FmtName; break; }
+			case Loc::Face: { count = FaceInfo.Count;  targetFmt = FaceInfo.FmtName; break; }
+			case Loc::Hand: { count = HandsInfo.Count; targetFmt = HandsInfo.FmtName; break; }
+			case Loc::Body: { count = BodyInfo.Count;  targetFmt = BodyInfo.FmtName; break; }
+			case Loc::Feet: { count = FeetInfo.Count;  targetFmt = FeetInfo.FmtName; break; }
 			}
 
 			if (a_overlay.Index > count) {
@@ -243,7 +243,7 @@ namespace BU::SKEE {
 		}
 
 		OverlayInterface = static_cast<IOverlayInterface*>(msg.interfaceMap->QueryInterface("Overlay"));
-		OverrideInterface = static_cast<IOverrideInterface*>(msg.interfaceMap->QueryInterface("OVerride"));
+		OverrideInterface = static_cast<IOverrideInterface*>(msg.interfaceMap->QueryInterface("Override"));
 
 		if (!OverlayInterface) {
 			logger::error("Couldn't get SKEE OverlayInterface.");
@@ -313,7 +313,6 @@ namespace BU::SKEE {
 		if (!a_actor || !MorphInterFace) return;
 		if (!a_actor->Is3DLoaded()) return;
 
-		//logger::info("Setting Bodymorph \"{}\" for actor {} to {} ", a_morphName, a_actor->formID, a_value);
 		MorphInterFace->SetMorph(a_actor, a_morphName, a_key, a_value);
 
 		if (a_immediate) Apply(a_actor);
@@ -324,28 +323,24 @@ namespace BU::SKEE {
 		return MorphInterFace->GetMorph(a_actor, a_morphName, a_key);
 	}
 
-	//Warning this will erase all morphs on a character
 	void Morphs::ClearAll(RE::Actor* a_actor) {
 		if (!a_actor || !MorphInterFace) return;
 		MorphInterFace->ClearMorphs(a_actor);
 		logger::trace("Cleared all racemenu morphs from actor {}", a_actor->formID);
 	}
 
-	//Warning this will erase all morphs done by this mod
 	void Morphs::Clear(RE::Actor* a_actor, const char* a_key) {
 		if (!a_actor || !MorphInterFace) return;
 		MorphInterFace->ClearBodyMorphKeys(a_actor, a_key);
 		logger::trace("Cleared all {} morphs from actor {}", a_key, a_actor->formID);
 	}
 
-	//Remove a morph
 	void Morphs::Clear(RE::Actor* a_actor, const char* a_morphName, const char* a_key) {
 		if (!a_actor || !MorphInterFace) return;
 		MorphInterFace->ClearMorph(a_actor, a_morphName, a_key);
 		logger::trace("Cleared morph \"{}\" from actor {}", a_morphName, a_actor->formID);
 	}
 
-	//Instruct racemenu to update this actor
 	void Morphs::Apply(RE::Actor* a_actor) {
 		if (!a_actor || !MorphInterFace) return;
 		if (!a_actor->Is3DLoaded()) return;
@@ -354,7 +349,6 @@ namespace BU::SKEE {
 		MorphInterFace->UpdateModelWeight(a_actor, false);
 		logger::trace("Do bodymorph update on actor {}", a_actor->formID);
 	}
-
 
 	bool Morphs::HasKey(RE::Actor* a_actor, const char* a_key) {
 		if (!a_actor || !MorphInterFace) return false;
@@ -366,5 +360,105 @@ namespace BU::SKEE {
 		return MorphInterFace != nullptr;
 	}
 
-}
+	std::vector<Morphs::MorphEntry> Morphs::CollectAll(RE::Actor* a_actor) {
+		if (!a_actor || !MorphInterFace) return {};
+		MorphValueCollector collector;
+		MorphInterFace->VisitMorphValues(a_actor, collector);
+		return std::move(collector.Entries);
+	}
 
+	std::vector<std::string> Morphs::CollectMorphNames(RE::Actor* a_actor) {
+		if (!a_actor || !MorphInterFace) return {};
+		MorphNameCollector collector;
+		MorphInterFace->VisitMorphs(a_actor, collector);
+		return std::move(collector.Names);
+	}
+
+	std::vector<std::pair<std::string, float>> Morphs::CollectKeysForMorph(RE::Actor* a_actor, const char* a_morphName) {
+		if (!a_actor || !MorphInterFace) return {};
+		MorphKeyCollector collector;
+		MorphInterFace->VisitKeys(a_actor, a_morphName, collector);
+		return std::move(collector.Entries);
+	}
+
+	//--------------------------------------------------------------------------------
+	// Transforms
+	//--------------------------------------------------------------------------------
+
+	void Transforms::OnSKSEDataLoaded() {
+		Transforms::Register();
+	}
+
+	void Transforms::Register() {
+
+		logger::info("Registering SKEE NiTransformInterface API");
+
+		InterfaceExchangeMessage msg;
+
+		const auto* const intfc{ SKSE::GetMessagingInterface() };
+
+		intfc->Dispatch(SKEE::InterfaceExchangeMessage::kMessage_ExchangeInterface, &msg, sizeof(SKEE::InterfaceExchangeMessage*), "SKEE");
+
+		if (!msg.interfaceMap) {
+			logger::error("Couldn't Get SKSE interface map.");
+			return;
+		}
+
+		TransformInterface = static_cast<SKEE::INiTransformInterface*>(msg.interfaceMap->QueryInterface("NiTransform"));
+
+		if (!TransformInterface) {
+			logger::warn("Couldn't get SKEE NiTransformInterface.");
+			return;
+		}
+
+		logger::info("SKEE NiTransformInterface Version {}", TransformInterface->GetVersion());
+	}
+
+	bool Transforms::Loaded() {
+		return TransformInterface != nullptr;
+	}
+
+	std::vector<Transforms::NodeEntry> Transforms::CollectAll(RE::Actor* a_actor, bool a_firstPerson) {
+		if (!a_actor || !TransformInterface) return {};
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		NodeCollector collector;
+		TransformInterface->VisitNodes(a_actor, a_firstPerson, fem, collector);
+		return std::move(collector.Entries);
+	}
+
+	void Transforms::SetPosition(RE::Actor* a_actor, const char* a_node, const char* a_key, Position a_pos, bool a_firstPerson) {
+		if (!a_actor || !TransformInterface) return;
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		TransformInterface->AddNodeTransformPosition(a_actor, a_firstPerson, fem, a_node, a_key, a_pos);
+		TransformInterface->UpdateNodeTransforms(a_actor, a_firstPerson, fem, a_node);
+	}
+
+	void Transforms::SetRotation(RE::Actor* a_actor, const char* a_node, const char* a_key, Rotation a_rot, bool a_firstPerson) {
+		if (!a_actor || !TransformInterface) return;
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		TransformInterface->AddNodeTransformRotation(a_actor, a_firstPerson, fem, a_node, a_key, a_rot);
+		TransformInterface->UpdateNodeTransforms(a_actor, a_firstPerson, fem, a_node);
+	}
+
+	void Transforms::SetScale(RE::Actor* a_actor, const char* a_node, const char* a_key, float a_scale, bool a_firstPerson) {
+		if (!a_actor || !TransformInterface) return;
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		TransformInterface->AddNodeTransformScale(a_actor, a_firstPerson, fem, a_node, a_key, a_scale);
+		TransformInterface->UpdateNodeTransforms(a_actor, a_firstPerson, fem, a_node);
+	}
+
+	void Transforms::RemoveNode(RE::Actor* a_actor, const char* a_node, const char* a_key, bool a_firstPerson) {
+		if (!a_actor || !TransformInterface) return;
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		TransformInterface->RemoveNodeTransform(a_actor, a_firstPerson, fem, a_node, a_key);
+		TransformInterface->UpdateNodeTransforms(a_actor, a_firstPerson, fem, a_node);
+	}
+
+	void Transforms::RemoveAll(RE::Actor* a_actor) {
+		if (!a_actor || !TransformInterface) return;
+		TransformInterface->RemoveAllReferenceTransforms(a_actor);
+		TransformInterface->UpdateNodeAllTransforms(a_actor);
+		logger::trace("Removed all node transforms from actor {}", a_actor->formID);
+	}
+
+}
