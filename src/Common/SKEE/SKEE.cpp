@@ -72,6 +72,9 @@ namespace BU::SKEE {
 
 		logger::trace("Cleared bodypart: {} On Ovl {}", a_Actor->GetDisplayFullName(), NodeName);
 
+		a_Actor->Update3DModel();
+		a_Actor->Update3DPosition(false);
+
 	}
 
 	void Overlays::ClearAll(RE::Actor* a_Actor) {

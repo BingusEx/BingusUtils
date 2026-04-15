@@ -1,7 +1,6 @@
 #pragma once
 #include "Common/SKEE/SKEE.hpp"
 #include "Util/Data/Utils/MapRecord.hpp"
-#include "Util/Data/Utils/VectorRecord.hpp"
 
 namespace BU::Features {
 
@@ -10,6 +9,7 @@ namespace BU::Features {
 		using OverlayEntry = SKEE::Overlays::Overlay;
 
 		static void ClearStoredOverlays(RE::Actor* a_actor);
+		static void ClearGameOverlays(RE::Actor* a_actor);
 		static void BuildOverlayList(RE::Actor* a_actor);
 		static void ApplyStoredOvls(RE::Actor* a_actor);
 		static void AddNewActor(RE::Actor* a_actor);

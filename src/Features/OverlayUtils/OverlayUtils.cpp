@@ -92,6 +92,7 @@ namespace BU::Features {
 	}
 
 	void OverlayTools::OnActorUpdate(RE::Actor* a_actor) {
+		/*
 		if (!a_actor || !SKEE::Overlays::Loaded()) return;
 
 		{
@@ -102,6 +103,7 @@ namespace BU::Features {
 		}
 
 		ApplyStoredOvls(a_actor);
+		*/
 	}
 
 	void OverlayTools::OnActorLoad3D(RE::Actor* a_actor) {
@@ -117,11 +119,11 @@ namespace BU::Features {
 	}
 
 	void OverlayTools::OnActorEquip(RE::Actor* a_actor) {
-		InvalidateAndApplyToActor(a_actor);
+		//InvalidateAndApplyToActor(a_actor);
 	}
 
 	void OverlayTools::OnActorUnequip(RE::Actor* a_actor) {
-		InvalidateAndApplyToActor(a_actor);
+		//InvalidateAndApplyToActor(a_actor);
 	}
 
 
@@ -152,6 +154,19 @@ namespace BU::Features {
 				it->second.OvlHands.clear();
 				it->second.OvlFeet.clear();
 			}
+		}
+	}
+
+	void OverlayTools::ClearGameOverlays(RE::Actor* a_actor) {
+		if (!a_actor) {
+			return;
+		}
+
+		{
+			SKEE::Overlays::ClearBodyPart(a_actor, SKEE::Overlays::FaceInfo);
+			SKEE::Overlays::ClearBodyPart(a_actor, SKEE::Overlays::BodyInfo);
+			SKEE::Overlays::ClearBodyPart(a_actor, SKEE::Overlays::HandsInfo);
+			SKEE::Overlays::ClearBodyPart(a_actor, SKEE::Overlays::FeetInfo);
 		}
 	}
 
@@ -334,46 +349,67 @@ namespace BU::Features {
 		// ── Region-level actions ─────────────────────────────────────────────────
 
 		if (maxCount > 0) {
-			if (ImGui::Button("Compact Top")) {
-				if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
 
-				{
-					std::scoped_lock lock{ m_mutex };
-					ReindexCompactTop(region.list);
-					data->AlreadyApplied = false;
+			{
+				if (ImGui::Button("Compact Top")) {
+					if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
+
+					{
+						std::scoped_lock lock{ m_mutex };
+						ReindexCompactTop(region.list);
+						data->AlreadyApplied = false;
+					}
+
 				}
-
-			}
-			if (ImGui::IsItemHovered()) {
-				ImGui::SetTooltip("Reindex overlays compacted toward slot 0.");
+				if (ImGui::IsItemHovered()) {
+					ImGui::SetTooltip("Reindex overlays compacted toward slot 0.");
+				}
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Compact Bottom")) {
-				if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
-				{
-					std::scoped_lock lock{ m_mutex };
-					ReindexCompactBottom(region.list, maxCount);
-					data->AlreadyApplied = false;
+
+			{
+				if (ImGui::Button("Compact Bottom")) {
+					if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
+					{
+						std::scoped_lock lock{ m_mutex };
+						ReindexCompactBottom(region.list, maxCount);
+						data->AlreadyApplied = false;
+					}
 				}
-			}
-			if (ImGui::IsItemHovered()) {
-				ImGui::SetTooltip("Reindex overlays compacted toward the last slot.");
+				if (ImGui::IsItemHovered()) {
+					ImGui::SetTooltip("Reindex overlays compacted toward the last slot.");
+				}
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Flip Order")) {
-				if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
 
-				{
-					std::scoped_lock lock{ m_mutex };
-					ReindexFlip(region.list, maxCount);
-					data->AlreadyApplied = false;
+			{
+				if (ImGui::Button("Flip Order")) {
+					if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
+
+					{
+						std::scoped_lock lock{ m_mutex };
+						ReindexFlip(region.list, maxCount);
+						data->AlreadyApplied = false;
+					}
+				}
+				if (ImGui::IsItemHovered()) {
+					ImGui::SetTooltip("Reverse the index order of all stored overlays.");
 				}
 			}
-			if (ImGui::IsItemHovered()) {
-				ImGui::SetTooltip("Reverse the index order of all stored overlays.");
+
+			ImGui::SameLine();
+
+			{
+				if (ImGui::Button("Clear RM Ovls")) {
+					if (info) SKEE::Overlays::ClearBodyPart(a_actor, *info);
+				}
+				if (ImGui::IsItemHovered()) {
+					ImGui::SetTooltip("Clear the specified bodypart's racemenu overlays without modifying the stored ones.");
+				}
 			}
+
 		}
 
 		ImGui::Spacing();
@@ -718,6 +754,17 @@ namespace BU::Features {
 							}
 							if (ImGui::IsItemHovered()) {
 								ImGui::SetTooltip("Reconstruct stored overlays and apply them to the actor.");
+							}
+						}
+
+						ImGui::SameLine();
+
+						{
+							if (ImGui::Button("Clear All RM Ovls")) {
+								ClearGameOverlays(actor);
+							}
+							if (ImGui::IsItemHovered()) {
+								ImGui::SetTooltip("Remove All Racemenu-side overlays without modifying the stored overlay data.");
 							}
 						}
 

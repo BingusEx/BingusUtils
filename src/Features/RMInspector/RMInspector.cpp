@@ -266,11 +266,9 @@ namespace BU::Features {
 			s_selectedActorID = selectedActor ? selectedActor->formID : 0;
 		}
 
-		ImGui::Text("Actor");
-
 		const std::string currentLabel = selectedActor ? BuildActorLabel(selectedActor) : "None";
 
-		if (ImGui::BeginCombo("##ActorSelect", currentLabel.c_str())) {
+		if (ImGui::BeginCombo("Select Actor##ActorSelect", currentLabel.c_str())) {
 			for (RE::Actor* actor : actors) {
 				if (!actor) continue;
 				const bool isSelected = (actor->formID == s_selectedActorID);
@@ -310,17 +308,32 @@ namespace BU::Features {
 			else {
 				// ---- Toolbar -----------------------------------------------
 				{
-					ImVec2 avail;
-					ImGui::GetContentRegionAvail(&avail);
-					ImGui::SetNextItemWidth(avail.x - 160.f);
+					{
+						ImVec2 contentWidth, len1, len2;
+						ImGui::GetContentRegionAvail(&contentWidth);
+						const float spacing = ImGui::GetStyle()->ItemSpacing.x;
+						const float padding = ImGui::GetStyle()->FramePadding.x;
+						ImGui::CalcTextSize(&len1, "Refresh", nullptr, false, 0.0f);
+						ImGui::CalcTextSize(&len2, "Apply", nullptr, false, 0.0f);
+						const float refreshWidth = len1.x + padding * 2.0f;
+						const float applyWidth = len2.x + padding * 2.0f;
+						ImGui::SetNextItemWidth(
+							contentWidth.x
+							- refreshWidth
+							- applyWidth
+							- (spacing * 2.0f)
+							- (padding * 2.0f)
+						);
+					}
+
 					ImGui::InputTextWithHint("##MorphFilter", "Filter by name or key...", s_morphFilter, sizeof(s_morphFilter));
 					ImGui::SameLine();
-					if (ImGui::Button("Refresh##M", { 70.f, 0.f })) {
+					if (ImGui::Button("Refresh##M")) {
 						s_morphState.Refresh(selectedActor);
 					}
 					ImGui::SameLine();
 					ImUtil::ButtonStyle_Green();
-					if (ImGui::Button("Apply##M", { 70.f, 0.f })) {
+					if (ImGui::Button("Apply##M")) {
 						SKEE::Morphs::Apply(selectedActor);
 					}
 					ImUtil::ButtonStyle_Reset();
@@ -363,11 +376,16 @@ namespace BU::Features {
 							bool needRefresh = false;
 
 							if (ImGui::BeginTable("##MorphTable", 4, kTableFlags, { 0.f, tableH })) {
+
+								ImVec2 textSize;
+								ImGui::CalcTextSize(&textSize, "X", nullptr, false, 0.0f);
+								const float delColW = (ImGui::GetStyle()->ItemSpacing.x * 2.0f) + textSize.x + ImGui::GetStyle()->ScrollbarSize;
+
 								ImGui::TableSetupScrollFreeze(0, 1);
 								ImGui::TableSetupColumn("Morph", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort, 0.45f, static_cast<ImGuiID>(MorphColumn::MorphName));
 								ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch, 0.25f, static_cast<ImGuiID>(MorphColumn::Key));
 								ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 0.25f, static_cast<ImGuiID>(MorphColumn::Value));
-								ImGui::TableSetupColumn("##Del", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 28.f);
+								ImGui::TableSetupColumn("##Del", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, delColW);
 								ImGui::TableHeadersRow();
 
 								if (ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs()) {
@@ -433,18 +451,35 @@ namespace BU::Features {
 			}
 			else {
 				// ---- Toolbar -----------------------------------------------
+
 				{
-					ImVec2 avail;
-					ImGui::GetContentRegionAvail(&avail);
-					ImGui::SetNextItemWidth(avail.x - 170.f);
+					ImVec2 contentWidth, len1, len2;
+					ImGui::GetContentRegionAvail(&contentWidth);
+					const float spacing = ImGui::GetStyle()->ItemSpacing.x;
+					const float padding = ImGui::GetStyle()->FramePadding.x;
+					ImGui::CalcTextSize(&len1, "Refresh", nullptr, false, 0.0f);
+					ImGui::CalcTextSize(&len2, "Clear All", nullptr, false, 0.0f);
+					const float refreshWidth = len1.x + padding * 2.0f;
+					const float applyWidth = len2.x + padding * 2.0f;
+					ImGui::SetNextItemWidth(
+						contentWidth.x
+						- refreshWidth
+						- applyWidth
+						- (spacing * 2.0f)
+						- (padding * 2.0f)
+					);
+				}
+
+
+				{
 					ImGui::InputTextWithHint("##NodeFilter", "Filter by node or key...", s_nodeFilter, sizeof(s_nodeFilter));
 					ImGui::SameLine();
-					if (ImGui::Button("Refresh##N", { 70.f, 0.f })) {
+					if (ImGui::Button("Refresh##N")) {
 						s_nodeState.Refresh(selectedActor);
 					}
 					ImGui::SameLine();
 					ImUtil::ButtonStyle_Red();
-					if (ImGui::Button("Clear All##N", { 80.f, 0.f })) {
+					if (ImGui::Button("Clear All##N")) {
 						SKEE::Transforms::RemoveAll(selectedActor);
 						s_nodeState.Refresh(selectedActor);
 					}
@@ -487,13 +522,18 @@ namespace BU::Features {
 							bool needRefresh = false;
 
 							if (ImGui::BeginTable("##NodeTable", 6, kTableFlags, { 0.f, tableH })) {
+
+								ImVec2 textSize;
+								ImGui::CalcTextSize(&textSize, "X", nullptr, false, 0.0f);
+								const float delColW = ImGui::GetStyle()->ItemSpacing.x * 2.0f + textSize.x + ImGui::GetStyle()->ScrollbarSize;
+
 								ImGui::TableSetupScrollFreeze(0, 1);
 								ImGui::TableSetupColumn("Node", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort, 0.22f, static_cast<ImGuiID>(NodeColumn::Node));
 								ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch, 0.18f, static_cast<ImGuiID>(NodeColumn::Key));
 								ImGui::TableSetupColumn("Position", ImGuiTableColumnFlags_WidthStretch, 0.22f, static_cast<ImGuiID>(NodeColumn::Position));
 								ImGui::TableSetupColumn("Rotation", ImGuiTableColumnFlags_WidthStretch, 0.22f, static_cast<ImGuiID>(NodeColumn::Rotation));
 								ImGui::TableSetupColumn("Scale", ImGuiTableColumnFlags_WidthStretch, 0.10f, static_cast<ImGuiID>(NodeColumn::Scale));
-								ImGui::TableSetupColumn("##Del", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 28.f);
+								ImGui::TableSetupColumn("##Del", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, delColW);
 								ImGui::TableHeadersRow();
 
 								if (ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs()) {
