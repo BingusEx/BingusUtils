@@ -12,17 +12,14 @@ namespace {
 					perk->perkConditions.head = nullptr;
 				}
 			}
-
 		}
 	}
 
 	void SetNodeViSible(RE::NiAVObject* node) {
 
 		if (!node->name.empty()) {
-			if (node->name.contains("[Ovl")) {
-				node->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw);
+			if (node->name.contains("Ovl")) {
 				node->GetFlags().set(RE::NiAVObject::Flag::kIgnoreFade);
-				node->GetFlags().set(RE::NiAVObject::Flag::kHighDetail);
 
 				if (RE::BSGeometry* geom = node->AsGeometry()) {
 					RE::NiPointer<RE::NiProperty> effect = geom->GetGeometryRuntimeData().properties[RE::BSGeometry::States::kEffect];
@@ -66,14 +63,44 @@ namespace {
 
 namespace BU::Features {
 
+	/*void Misc::OnSerdeLoad(SKSE::SerializationInterface* a_this, std::uint32_t a_recordType, std::uint32_t a_recordVersion, std::uint32_t a_recordSize) {
+
+	}
+
+	void Misc::OnSerdeSave(SKSE::SerializationInterface* a_this) {
+
+	}*/
+
 	void Misc::OnSKSEDataLoaded() {
 		RemovePerkConditions();
+
+		/*
+		for (RE::TESForm* form : tes->GetFormArray(RE::FormType::Climate)) {
+			if (RE::TESClimate* climate = skyrim_cast<RE::TESClimate*>(form)) {
+				climate->timing.sunrise.begin = 0;
+				climate->timing.sunrise.end = 255;
+				climate->timing.sunset.begin = 0;
+				climate->timing.sunset.end = 255;
+			}
+		}
+		*/
+
+	}
+
+	void Misc::OnUpdate() {
+		//Works
+		if (RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton()) {
+			if (player->Is3DLoaded()) {
+				SetNodeVisibleRecursive(player->GetCurrent3D());
+			}
+		}
 	}
 
 	void Misc::OnActorSet3D(RE::Actor* a_actor, RE::NiAVObject* a_object) {
-		if (a_actor) {
+		//Doesn't work, maybe too early?
+		/*if (a_actor) {
 			SetNodeVisibleRecursive(a_object);
-		}
+		}*/
 	}
 
 	void Misc::OnMenuChange(const RE::MenuOpenCloseEvent* a_event) {
@@ -83,4 +110,8 @@ namespace BU::Features {
 			}
 		}
 	}
+
+	/*void Misc::Draw() {
+		
+	}*/
 }
