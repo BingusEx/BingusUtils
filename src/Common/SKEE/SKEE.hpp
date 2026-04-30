@@ -247,6 +247,7 @@ namespace BU::SKEE {
 
 		static void RemoveNode(RE::Actor* a_actor, const char* a_node, const char* a_key, bool a_firstPerson = false);
 		static void RemoveAll(RE::Actor* a_actor);
+		static void Update(RE::Actor* a_actor, const char* a_node);
 
 		private:
 		static inline SKEEIntfc::INiTransformInterface* TransformInterface = nullptr;

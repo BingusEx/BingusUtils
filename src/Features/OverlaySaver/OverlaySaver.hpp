@@ -41,7 +41,7 @@ namespace BU::Features {
 		static inline Serialization::MapRecord<Data, 'OUAD'> ActorData = {};
 
 		friend UI::UIItemRegistry;
-		static constexpr std::string_view UICategoryName = "Overlay Utils";
+		static constexpr std::string_view UICategoryName = "Overlay Saver";
 		static void Draw();
 	};
 }

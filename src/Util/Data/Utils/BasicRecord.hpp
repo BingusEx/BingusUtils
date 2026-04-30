@@ -13,7 +13,7 @@ namespace Serialization {
 		return false;
 	}
 
-	static inline std::string Uint32ToStr(std::uint32_t value){
+	static std::string Uint32ToStr(std::uint32_t value){
 		char bytes[4];
 		bytes[3] = static_cast<char>((value >> 24) & 0xFF);
 		bytes[2] = static_cast<char>((value >> 16) & 0xFF);
@@ -26,15 +26,15 @@ namespace Serialization {
 	// Format: [uint32 byteCount][byteCount bytes (no null terminator)]
 	// Supports std::string and std::string_view on save; std::string on load.
 
-	static inline bool ReadU32(SKSE::SerializationInterface* s, std::uint32_t& out){
+	static bool ReadU32(SKSE::SerializationInterface* s, std::uint32_t& out){
 		return s->ReadRecordData(&out, sizeof(out));
 	}
 
-	static inline bool WriteU32(SKSE::SerializationInterface* s, std::uint32_t v){
+	static bool WriteU32(SKSE::SerializationInterface* s, std::uint32_t v){
 		return s->WriteRecordData(&v, sizeof(v));
 	}
 
-	static inline bool ReadStringPayload(SKSE::SerializationInterface* s, std::uint32_t payloadSize, std::string& out){
+	static bool ReadStringPayload(SKSE::SerializationInterface* s, std::uint32_t payloadSize, std::string& out){
 		// If payloadSize includes a legacy uint64 length header, handle it too.
 		// - New: payloadSize == 4 + len
 		// - Old: payloadSize == 8 + len  (uint64 len)
@@ -77,7 +77,7 @@ namespace Serialization {
 		return false;
 	}
 
-	static inline bool WriteStringPayload(SKSE::SerializationInterface* s, std::string_view sv){
+	static bool WriteStringPayload(SKSE::SerializationInterface* s, std::string_view sv){
 		const std::uint32_t len = static_cast<std::uint32_t>(sv.size());
 		if (!WriteU32(s, len)) {
 			return false;
@@ -117,7 +117,6 @@ namespace Serialization {
 					}
 				}
 				logger::error("{}: Could not be loaded! (string)", Uint32ToStr(ID));
-				return;
 			}
 			else {
 				if (version == ver && size == sizeof(T)) {
@@ -130,7 +129,6 @@ namespace Serialization {
 					}
 				}
 				logger::error("{}: Could not be loaded!", Uint32ToStr(ID));
-				return;
 			}
 		}
 
@@ -148,7 +146,6 @@ namespace Serialization {
 					return;
 				}
 				logger::error("{}: Could not be saved (string)", Uint32ToStr(ID));
-				return;
 			}
 			else {
 				if (s->WriteRecordData(&value, sizeof(T))) {
@@ -156,7 +153,6 @@ namespace Serialization {
 					return;
 				}
 				logger::error("{}: Could not be saved", Uint32ToStr(ID));
-				return;
 			}
 		}
 	};

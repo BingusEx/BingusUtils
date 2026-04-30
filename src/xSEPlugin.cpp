@@ -9,9 +9,10 @@
 #include "Features/ArmorFactor/ArmorFactor.hpp"
 #include "Features/ManaTanks/Manatanks.hpp"
 #include "Features/Misc/Misc.hpp"
+#include "Features/MorphAdjust/MorphAdjust.hpp"
 #include "Features/NPCUtils/NPCUtils.hpp"
 #include "Features/QuestUtils//QuestUtils.hpp"
-#include "Features/OverlayUtils/OverlayUtils.hpp"
+#include "Features/OverlaySaver/OverlaySaver.hpp"
 #include "Features/RMInspector/RMInspector.hpp"
 
 
@@ -34,6 +35,7 @@ SKSEPluginLoad(const SKSE::LoadInterface * a_SKSE) {
 	BU::EventDispatcher::AddListener(&BU::Features::QuestUtils::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::Features::NPCUtils::GetSingleton());
 	BU::EventDispatcher::AddListener(&BU::Features::RMInspector::GetSingleton());
+	BU::EventDispatcher::AddListener(&BU::Features::MorphAdjust::GetSingleton());
 
 	BU::EventDispatcher::Init(_byteswap_ulong('BIUT'));
 

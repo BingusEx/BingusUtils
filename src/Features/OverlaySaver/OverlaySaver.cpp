@@ -1,5 +1,5 @@
 #include "Common/Utilities.hpp"
-#include "Features/OverlayUtils/OverlayUtils.hpp"
+#include "Features/OverlaySaver/OverlaySaver.hpp"
 #include "Common/SKEE/SKEE.hpp"
 #include "Common/UI/UIUtils.hpp"
 
@@ -68,7 +68,7 @@ namespace {
 
 namespace BU::Features {
 
-	// ── Events ────────────────────────────────────────────────────────────────
+	// -- Events ----------------------------------------------------------------
 
 	void OverlayTools::OnSerdeSave(SKSE::SerializationInterface* a_this) {
 		std::scoped_lock lock{ m_mutex };
@@ -127,7 +127,7 @@ namespace BU::Features {
 	}
 
 
-	// ── Core ──────────────────────────────────────────────────────────────────
+	// -- Core ------------------------------------------------------------------
 
 	void OverlayTools::RemoveActor(RE::Actor* a_actor) {
 		if (!a_actor) {
@@ -276,7 +276,7 @@ namespace BU::Features {
 	}
 
 
-	// ── UI ────────────────────────────────────────────────────────────────────────
+	// -- UI ------------------------------------------------------------------------
 
 	void OverlayTools::DrawOverlayEntry(RE::Actor* a_actor) {
 
@@ -302,7 +302,7 @@ namespace BU::Features {
 
 		if (!data) return;
 
-		// ── Region selector ──────────────────────────────────────────────────────
+		// -- Region selector ------------------------------------------------------
 		struct RegionDef {
 			const char* label;
 			uint8_t loc;
@@ -346,7 +346,7 @@ namespace BU::Features {
 
 		ImGui::Spacing();
 
-		// ── Region-level actions ─────────────────────────────────────────────────
+		// -- Region-level actions -------------------------------------------------
 
 		if (maxCount > 0) {
 
@@ -418,7 +418,7 @@ namespace BU::Features {
 
 		ImGui::Text("Stored Overlay Editor");
 
-		// ── Overlay selector ─────────────────────────────────────────────────────
+		// -- Overlay selector -----------------------------------------------------
 		auto GetOverlayLabel = [](const OverlayEntry& e) -> std::string {
 			std::string path = e.TexturePath;
 			std::ranges::replace(path, '\\', '/');
@@ -505,7 +505,7 @@ namespace BU::Features {
 			}
 		}
 
-		// ── Selected overlay editor ───────────────────────────────────────────────
+		// -- Selected overlay editor -----------------------------------------------
 		if (!list.empty()) {
 			auto& ovl = list[s_overlayIdx];
 			ovl.BodyPart = region.loc;
@@ -578,7 +578,7 @@ namespace BU::Features {
 
 	void OverlayTools::Draw() {
 
-		// ─── Options ────────────────────────────────────────────────────────────
+		// --- Options ------------------------------------------------------------
 		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen)) {
 
 			static std::string AlreadyAddedText = "";
@@ -650,7 +650,7 @@ namespace BU::Features {
 				ImGui::Spacing();
 		}
 
-		// ─── Edit Actor ─────────────────────────────────────────────────────────
+		// --- Edit Actor ---------------------------------------------------------
 		if (ImGui::CollapsingHeader("Edit Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
 
 			const bool isEmpty = [&] {

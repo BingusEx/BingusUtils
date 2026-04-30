@@ -464,4 +464,9 @@ namespace BU::SKEE {
 		logger::trace("Removed all node transforms from actor {}", a_actor->formID);
 	}
 
+	void Transforms::Update(RE::Actor* a_actor, const char* a_node) {
+		if (!a_actor || !TransformInterface) return;
+		const bool fem = static_cast<bool>(a_actor->GetActorBase()->GetSex());
+		TransformInterface->UpdateNodeTransforms(a_actor, false, fem, a_node);
+	}
 }

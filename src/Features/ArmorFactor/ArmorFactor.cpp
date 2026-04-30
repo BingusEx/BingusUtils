@@ -130,7 +130,7 @@ namespace BU::Features {
 
     void ArmorFactor::Draw() {
 
-        // ─── Options ────────────────────────────────────────────────────────────
+        // --- Options ------------------------------------------------------------
         if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen)) {
 
             static std::string AlreadyAddedText = "";
@@ -245,7 +245,7 @@ namespace BU::Features {
 
         }
 
-        // ─── Edit Actor ─────────────────────────────────────────────────────────
+        // --- Edit Actor ---------------------------------------------------------
         if (ImGui::CollapsingHeader("Edit Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ActorData.value.empty()) {
                 ImGui::TextDisabled("No actors added yet. Use the Options section above.");
@@ -349,7 +349,7 @@ namespace BU::Features {
 
         }
 
-        // ─── Morph Entries ───────────────────────────────────────────────────────
+        // --- Morph Entries -------------------------------------------------------
         if (ImGui::CollapsingHeader("Morphs")) {
             auto& list = MorphData.value;
             bool morphChanged = false;
@@ -408,7 +408,7 @@ namespace BU::Features {
                 else ImGui::SetTooltip("Add this morph to the list.");
             }
 
-            // ── Morph list ──
+            // -- Morph list --
             ImGui::Spacing();
             ImGui::Text("%s", fmt::format("Morphs ({})", list.size()).c_str());
 

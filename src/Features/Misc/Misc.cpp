@@ -20,12 +20,15 @@ namespace {
 		if (!node->name.empty()) {
 			if (node->name.contains("Ovl")) {
 				node->GetFlags().set(RE::NiAVObject::Flag::kIgnoreFade);
+				node->GetFlags().reset(RE::NiAVObject::Flag::kDisableSorting);
 
 				if (RE::BSGeometry* geom = node->AsGeometry()) {
 					RE::NiPointer<RE::NiProperty> effect = geom->GetGeometryRuntimeData().properties[RE::BSGeometry::States::kEffect];
 					RE::BSLightingShaderProperty* lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 					if (lightingShader) {
 						lightingShader->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kNoFade);
+						lightingShader->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kZBufferTest);
+						lightingShader->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kZBufferWrite);
 					}
 				}
 			}
